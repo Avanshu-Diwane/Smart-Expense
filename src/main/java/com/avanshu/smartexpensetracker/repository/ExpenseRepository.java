@@ -24,6 +24,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
                            @Param("month") int month,
                            @Param("year") int year);
 
+
+
     @Query("SELECT SUM(e.amount) FROM Expense e WHERE e.user.id = :userId AND YEAR(e.date) = :year")
     Double getYearlyTotal(@Param("userId") Long userId,
                           @Param("year") int year);

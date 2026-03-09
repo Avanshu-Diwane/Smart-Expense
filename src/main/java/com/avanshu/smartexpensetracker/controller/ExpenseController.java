@@ -2,7 +2,10 @@ package com.avanshu.smartexpensetracker.controller;
 
 import com.avanshu.smartexpensetracker.DTO.ExpenseDTO;
 import com.avanshu.smartexpensetracker.entity.Expense;
+import com.avanshu.smartexpensetracker.entity.User;
+import com.avanshu.smartexpensetracker.repository.UserRepository;
 import com.avanshu.smartexpensetracker.service.ExpenseService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,56 +16,66 @@ import java.util.Map;
 public class ExpenseController {
 
     private final ExpenseService expenseService;
+    private final UserRepository userRepository;
 
-    public ExpenseController(ExpenseService expenseService) {
+    public ExpenseController(ExpenseService expenseService, UserRepository userRepository) {
         this.expenseService = expenseService;
+        this.userRepository = userRepository;
     }
 
-    // Use a fixed User ID to bypass authentication issues during deployment
-    private final Long TEST_USER_ID = 1L;
+    /**
+     * Helper method to extract the user ID from the JWT/Security Context.
+     * This ensures each user only sees and modifies their own data.
+     */
+    private Long getAuthenticatedUserId() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found in database"));
+        return user.getId();
+    }
 
-    // Add expense
+    // Add expense linked to the authenticated user
     @PostMapping
     public Expense addExpense(@RequestBody Expense expense) {
-        return expenseService.addExpense(TEST_USER_ID, expense);
+        return expenseService.addExpense(getAuthenticatedUserId(), expense);
     }
 
-    // Update expense
+    // Update only if the expense belongs to the authenticated user
     @PutMapping("/{expenseId}")
     public Expense updateExpense(@PathVariable Long expenseId, @RequestBody Expense expense) {
-        return expenseService.updateExpense(TEST_USER_ID, expenseId, expense);
+        return expenseService.updateExpense(getAuthenticatedUserId(), expenseId, expense);
     }
 
-    // Delete expense
+    // Delete only if the expense belongs to the authenticated user
     @DeleteMapping("/{expenseId}")
     public String deleteExpense(@PathVariable Long expenseId) {
-        expenseService.deleteExpense(TEST_USER_ID, expenseId);
+        expenseService.deleteExpense(getAuthenticatedUserId(), expenseId);
         return "Expense deleted successfully";
     }
 
-    // Monthly Total for Dashboard Cards
+    // Monthly Total filtered by user
     @GetMapping("/total")
     public Map<String, Double> getMonthlyTotal(@RequestParam int month, @RequestParam int year) {
-        Double total = expenseService.getMonthlyTotal(TEST_USER_ID, month, year);
+        Double total = expenseService.getMonthlyTotal(getAuthenticatedUserId(), month, year);
         return Map.of("total", total != null ? total : 0.0);
     }
 
-    // Category Breakdown for Pie Chart
+    // Category Breakdown for the Pie Chart - filtered by user
     @GetMapping("/category-summary")
     public List<Map<String, Object>> getCategorySummary(@RequestParam int month, @RequestParam int year) {
-        return expenseService.getCategorySummary(TEST_USER_ID, month, year);
+        return expenseService.getCategorySummary(getAuthenticatedUserId(), month, year);
     }
 
-    // Yearly Total
+    // Yearly Total filtered by user
     @GetMapping("/yearly-total")
     public Map<String, Double> getYearlyTotal(@RequestParam int year) {
-        Double total = expenseService.getYearlyTotal(TEST_USER_ID, year);
+        Double total = expenseService.getYearlyTotal(getAuthenticatedUserId(), year);
         return Map.of("total", total != null ? total : 0.0);
     }
 
-    // All expenses for Bar and Line Charts
+    // List of expenses for the current user only
     @GetMapping
     public List<ExpenseDTO> getExpenses() {
-        return expenseService.getExpensesByUser(TEST_USER_ID);
+        return expenseService.getExpensesByUser(getAuthenticatedUserId());
     }
 }
