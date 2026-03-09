@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         // This is why your signup is failing; you must permit these:
-                        .requestMatchers("/api/signup", "/api/login", "/api/auth/**").permitAll()
+                        .requestMatchers("/api/users/signup", "/api/users/login", "/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
