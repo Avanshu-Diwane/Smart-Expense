@@ -2,16 +2,17 @@ package com.avanshu.smartexpensetracker.controller;
 
 import com.avanshu.smartexpensetracker.DTO.LoginRequest;
 import com.avanshu.smartexpensetracker.DTO.SignupDTO;
+import com.avanshu.smartexpensetracker.config.JwtFilter;
 import com.avanshu.smartexpensetracker.entity.User;
 import com.avanshu.smartexpensetracker.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.avanshu.smartexpensetracker.entity.User;
-
-
 
 import java.util.List;
+import java.util.Map;
+
+
 
 @RestController
 @RequestMapping("/api/users")
@@ -34,8 +35,9 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest request) {
-        return userService.login(request);
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        String token = userService.login(request);
+        return ResponseEntity.ok(Map.of("token", token));
     }
 
     @GetMapping("/{id}")
