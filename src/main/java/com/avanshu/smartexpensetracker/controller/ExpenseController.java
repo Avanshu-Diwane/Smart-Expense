@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+
 @RestController
 @RequestMapping("/api/expenses")
 public class ExpenseController {
@@ -28,15 +29,27 @@ public class ExpenseController {
      * This ensures each user only sees and modifies their own data.
      */
     private Long getAuthenticatedUserId() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found in database"));
-        return user.getId();
+
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof String) {
+            String email = (String) principal;
+
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            return user.getId();
+        }
+
+        throw new RuntimeException("Invalid authentication");
     }
 
     // Add expense linked to the authenticated user
     @PostMapping
     public Expense addExpense(@RequestBody Expense expense) {
+
+        System.out.println("Expense Received: " + expense.getTitle());
+
         return expenseService.addExpense(getAuthenticatedUserId(), expense);
     }
 

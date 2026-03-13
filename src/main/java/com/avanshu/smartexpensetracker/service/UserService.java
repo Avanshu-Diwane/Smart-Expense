@@ -82,4 +82,8 @@ public class UserService {
     public String loginUser(String email, String password) {
         return jwtUtil.generateToken(email);
     }
+
+    public boolean emailExists(String email){
+        return userRepository.existsByEmail(email);
+    }
 }

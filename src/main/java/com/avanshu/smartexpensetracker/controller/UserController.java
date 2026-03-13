@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 
-
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -26,18 +26,29 @@ public class UserController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody SignupDTO.SignupRequest request) {
+
+        if(userService.emailExists(request.getEmail())){
+            return ResponseEntity.badRequest().body("Email already registered");
+        }
+
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPassword(request.getPassword());
-        userService.saveUser(user); // encoding happens inside service
+
+        userService.saveUser(user);
+
         return ResponseEntity.ok("User registered successfully");
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        String token = userService.login(request);
-        return ResponseEntity.ok(Map.of("token", token));
+        try {
+            String token = userService.login(request);
+            return ResponseEntity.ok(Map.of("token", token));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Invalid email or password");
+        }
     }
 
     @GetMapping("/{id}")
