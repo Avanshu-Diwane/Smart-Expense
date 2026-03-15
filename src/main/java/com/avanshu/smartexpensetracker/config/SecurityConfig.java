@@ -36,7 +36,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/users/signup", "/api/users/login").permitAll()
+                        // ADDED "/" and "/api/users" to permitAll so UptimeRobot can wake the server
+                        .requestMatchers("/", "/api/users", "/api/users/signup", "/api/users/login").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement( sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -48,9 +49,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(frontendUrl));
+
+        // Updated to allow both your frontend URL and local testing for mobile compatibility
+        configuration.setAllowedOriginPatterns(List.of("*"));
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
